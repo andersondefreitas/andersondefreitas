@@ -1,0 +1,316 @@
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+
+#define MAX_PRODUTOS 100
+#define MAX_TRANSACOES 100
+#define MAX_ITENS_POR_TRANSACAO 10
+
+// Estrutura para um item vendido em uma transação
+struct ItemVendido {
+    char nomeProduto[50];
+    int quantidadeVendida;
+    float precoTotal;
+};
+
+// Estrutura para uma transação
+struct Transacao {
+    int idTransacao;
+    struct ItemVendido itens[MAX_ITENS_POR_TRANSACAO];
+    int quantidadeItens;
+    float precoTotalTransacao;
+    char dataTransacao[20];
+};
+
+// Estrutura para um produto em estoque
+struct ProdutoEstoque {
+    char nome[50];
+    int quantidade;
+    float precoCompra;
+    float precoVenda;
+    char dataValidade[20];
+};
+
+// Função para adicionar um novo produto ao estoque
+void adicionarProduto(struct ProdutoEstoque estoque[], int *numProdutos) {
+    if (*numProdutos >= MAX_PRODUTOS) {
+        printf("O estoque está cheio, não é possível adicionar mais nada.\n");
+        return;
+    }
+    printf("Adicione um produto:\n");
+    printf("Nome do produto: ");
+    scanf("%s", estoque[*numProdutos].nome);
+    while (getchar() != '\n');
+    printf("Quantidade em estoque(em kilos): ");
+    scanf("%d", &estoque[*numProdutos].quantidade);
+    while (getchar() != '\n');
+    printf("Preço de compra: ");
+    scanf("%f", &estoque[*numProdutos].precoCompra);
+    while (getchar() != '\n');
+    printf("Preço de venda: ");
+    scanf("%f", &estoque[*numProdutos].precoVenda);
+    while (getchar() != '\n');
+    printf("Data de validade (formato: DD/MM/AAAA): ");
+    scanf("%s", estoque[*numProdutos].dataValidade);
+    while (getchar() != '\n');
+    (*numProdutos)++;
+    printf("Produto adicionado com sucesso!\n");
+}
+
+// Função para exibir os produtos no estoque
+void exibirProdutos(struct ProdutoEstoque estoque[], int numProdutos) {
+    if (numProdutos == 0) {
+        printf("O estoque está vazio.\n");
+        return;
+    }
+    printf("Produtos no estoque:\n");
+    printf("%-20s %-10s %-15s %-15s %-10s\n", "Nome do produto", "Quantidade(em kilos)", "Preço de compra", "Preço de venda", "Data de validade");
+    for (int i = 0; i < numProdutos; i++) {
+        printf("%-20s %-10d %-15.2f %-15.2f %-10s\n",
+               estoque[i].nome, estoque[i].quantidade, estoque[i].precoCompra, estoque[i].precoVenda, estoque[i].dataValidade);
+    }
+}
+
+// Função para encontrar um produto no estoque pelo nome
+int encontrarProduto(struct ProdutoEstoque estoque[], int numProdutos, char *nomeProduto) {
+    for (int i = 0; i < numProdutos; i++) {
+        if (strcmp(estoque[i].nome, nomeProduto) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+// Função para adicionar uma nova transação
+void adicionarTransacao(struct ProdutoEstoque estoque[], int numProdutos, struct Transacao transacoes[], int *numTransacoes) {
+    if (*numTransacoes >= MAX_TRANSACOES) {
+        printf("O limite de transações foi atingido.\n");
+
+    }
+    transacoes[*numTransacoes].quantidadeItens = 0;
+    transacoes[*numTransacoes].precoTotalTransacao = 0;
+    char nomeProduto[50];
+    int quantidade;
+    int indiceProduto;
+    int escolhaCaixa;
+    do {
+        printf("\n---- Adicionando Itens ----\n");
+        printf("1. Adicionar um produto\n");
+        printf("2. Finalizar venda\n");
+        printf("3. Cancelar venda\n");
+        printf("Escolha uma opção: ");
+        scanf("%d", &escolhaCaixa);
+        while (getchar() != '\n');
+        switch (escolhaCaixa) {
+            case 1:
+                printf("Digite o nome do produto: ");
+                scanf("%s", nomeProduto);
+                while (getchar() != '\n');
+                indiceProduto = encontrarProduto(estoque, numProdutos, nomeProduto);
+                if (indiceProduto == -1) {
+                    printf("Produto não encontrado no estoque.\n");
+                    continue;
+                }
+                printf("Digite a quantidade em kilos vendida");
+                scanf("%d", &quantidade);
+                while (getchar() != '\n');
+                if (quantidade > estoque[indiceProduto].quantidade) {
+                    printf("Quantidade insuficiente em estoque.\n");
+                    continue;
+                }
+                float precoTotal = quantidade * estoque[indiceProduto].precoVenda;
+                strcpy(transacoes[*numTransacoes].itens[transacoes[*numTransacoes].quantidadeItens].nomeProduto, nomeProduto);
+                transacoes[*numTransacoes].itens[transacoes[*numTransacoes].quantidadeItens].quantidadeVendida = quantidade;
+                transacoes[*numTransacoes].itens[transacoes[*numTransacoes].quantidadeItens].precoTotal = precoTotal;
+                estoque[indiceProduto].quantidade -= quantidade;
+                transacoes[*numTransacoes].precoTotalTransacao += precoTotal;
+                transacoes[*numTransacoes].quantidadeItens++;
+                break;
+            case 2:
+                printf("Finalizando venda...\n");
+                break;
+            case 3:
+                printf("Transação cancelada.\n");
+                return;
+            default:
+                printf("Opção inválida. Tente novamente.\n");
+        }
+    } while (escolhaCaixa != 2);
+
+    time_t now = time(0);
+    struct tm *t = localtime(&now);
+    strftime(transacoes[*numTransacoes].dataTransacao, sizeof(transacoes[*numTransacoes].dataTransacao), "%d/%m/%Y", t);
+    transacoes[*numTransacoes].idTransacao = *numTransacoes + 1;
+
+    // Completar com a parte de pagamento e recibo
+        float pagamento, troco;
+        int metodoPagamento;
+        printf("\n---- Pagamento ----\n");
+        printf("1. Cartão\n");
+        printf("2. Dinheiro\n");
+        printf("3. Pix\n");
+        printf("Escolha uma opção: ");
+        scanf("%d", &metodoPagamento);
+        while (getchar() != '\n');
+        switch (metodoPagamento) { 
+            case 1:
+                printf("Pagamento por cartão.\n");
+                break;
+            case 2:
+                printf("Pagamento em dinheiro.\n");
+                break;
+            case 3:
+                printf("Pagamento por Pix.\n");
+                break;
+            default:
+                printf("Opção de pagamento inválida.\n");
+                return;
+        }
+        printf("Digite o valor do pagamento: R$ ");
+     scanf("%f", &pagamento);
+
+    if (pagamento < transacoes[*numTransacoes].precoTotalTransacao) {
+        printf("Pagamento insuficiente. Transação cancelada.\n");
+
+    }
+        while (getchar() != '\n');
+        troco = pagamento - transacoes[*numTransacoes].precoTotalTransacao;
+        printf("\n---- Recibo ----\n");
+        printf("ID da Transação: %d\n", transacoes[*numTransacoes].idTransacao);
+        printf("Data: %s\n", transacoes[*numTransacoes].dataTransacao);
+        for (int i = 0; i < transacoes[*numTransacoes].quantidadeItens; i++) {
+            printf("Item: %s\n", transacoes[*numTransacoes].itens[i].nomeProduto);
+            printf("Quantidade: %d\n", transacoes[*numTransacoes].itens[i].quantidadeVendida);
+            printf("Preço Total: R$ %.2f\n", transacoes[*numTransacoes].itens[i].precoTotal);
+        }
+        printf("Preço Total da Transação: R$ %.2f\n", transacoes[*numTransacoes].precoTotalTransacao);
+        printf("Pagamento: R$ %.2f\n", pagamento);
+        printf("Troco: R$ %.2f\n", troco);
+        printf("---- Fim do Recibo ----\n");
+        (*numTransacoes)++;
+        printf("Transação adicionada com sucesso!\n");
+    }
+
+    // Função para exibir as transações
+    void exibirTransacoes(struct Transacao transacoes[], int numTransacoes) {
+        if (numTransacoes == 0) {
+            printf("Não há transações registradas.\n");
+            return;
+        }
+        printf("Transações:\n");
+        printf("%-15s %-20s %-15s %-15s %-20s\n", "ID", "Nome do produto", "Quantidade(em kilos)", "Preço Total", "Data");
+        for (int i = 0; i < numTransacoes; i++) {
+            for (int j = 0; j < transacoes[i].quantidadeItens; j++) {
+                printf("%-15d %-20s %-15d %-15.2f %-20s\n",
+                       transacoes[i].idTransacao, transacoes[i].itens[j].nomeProduto,
+                       transacoes[i].itens[j].quantidadeVendida, transacoes[i].itens[j].precoTotal, transacoes[i].dataTransacao);
+            }
+            printf("\n");
+        }
+    }
+
+    // Função para login no estoque
+    int estoqueLogin() {
+        char senha[50];
+        printf("Digite a senha para acessar o estoque: ");
+        scanf("%s", senha);
+        while (getchar() != '\n');
+        if (strcmp(senha, "3232") == 0) {
+            return 1;
+        } else {
+            printf("Senha incorreta!\n");
+            return 0;
+        }
+    }
+
+    int main() {
+        struct ProdutoEstoque estoque[MAX_PRODUTOS];
+        int numProdutos = 0;
+        struct Transacao transacoes[MAX_TRANSACOES];
+        int numTransacoes = 0;
+        int escolha;
+        int caixaEscolhe;
+        char nomeProduto[50];
+
+        do {
+            printf("\nMenu Principal:\n");
+            printf("1. Estoque\n");
+            printf("2. Caixa\n");
+            printf("3. Sair\n");
+            printf("Escolha uma opção: ");
+            scanf("%d", &escolha);
+            while (getchar() != '\n');
+            switch (escolha) {
+                case 1:
+                    if (estoqueLogin()) {
+                        do {
+                            printf("\nMenu de Estoque:\n");
+                            printf("1. Adicionar um produto\n");
+                            printf("2. Mostrar produtos no estoque\n");
+                            printf("3. Procurar produto no estoque\n");
+                            printf("4. Voltar ao menu principal\n");
+                            printf("Escolha uma opção: ");
+                            scanf("%d", &escolha);
+                            while (getchar() != '\n');
+                            switch (escolha) {
+                                case 1:
+                                    adicionarProduto(estoque, &numProdutos);
+                                    break;
+                                case 2:
+                                    exibirProdutos(estoque, numProdutos);
+                                    break;
+                                case 3:
+                                    printf("Digite o nome do produto a ser procurado: ");
+                                    scanf("%s", nomeProduto);
+                                    while (getchar() != '\n');
+                                    int indice = encontrarProduto(estoque, numProdutos, nomeProduto);
+                                    if (indice != -1) {
+                                        printf("Produto encontrado: %s, Quantidade em kilos: %d, Preço de compra: %.2f, Preço de venda: %.2f, Data de validade: %s\n",
+                                               estoque[indice].nome, estoque[indice].quantidade, estoque[indice].precoCompra,
+                                               estoque[indice].precoVenda, estoque[indice].dataValidade);
+                                    } else {
+                                        printf("Produto não encontrado no estoque.\n");
+                                    }
+                                    break;
+                                case 4:
+                                    printf("Voltando ao menu principal...\n");
+                                    break;
+                                default:
+                                    printf("Opção inválida. Tente novamente.\n");
+                            }
+                        } while (escolha != 4);
+                    }
+                    break;
+                case 2:
+                    do {
+                        printf("\nMenu de Caixa:\n");
+                        printf("1. Registrar uma venda\n");
+                        printf("2. Mostrar transações\n");
+                        printf("3. Voltar ao menu principal\n");
+                        printf("Escolha uma opção: ");
+                        scanf("%d", &caixaEscolhe);
+                        while (getchar() != '\n');
+                        switch (caixaEscolhe) {
+                            case 1:
+                                adicionarTransacao(estoque, numProdutos, transacoes, &numTransacoes);
+                                break;
+                            case 2:
+                                exibirTransacoes(transacoes, numTransacoes);
+                                break;
+                            case 3:
+                                printf("Voltando ao menu principal...\n");
+                                break;
+                            default:
+                                printf("Opção inválida. Tente novamente.\n");
+                        }
+                    } while (caixaEscolhe != 3); 
+                    break;
+                case 3:
+                    printf("Saindo do programa...\n");
+                    break;
+                default:
+                    printf("Opção inválida. Tente novamente.\n");
+            }
+        } while (escolha != 3);
+       return 0;
+}
