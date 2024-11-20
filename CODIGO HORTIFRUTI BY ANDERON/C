@@ -37,12 +37,19 @@ void adicionarProduto(struct ProdutoEstoque estoque[], int *numProdutos) {
         printf("O estoque está cheio, não é possível adicionar mais nada.\n");
         return;
     }
-    printf("Adicione um produto:\n");
+    printf("Cadastro de produto:\n");
     printf("Nome do produto: ");
     scanf("%s", estoque[*numProdutos].nome);
     while (getchar() != '\n');
-    printf("Quantidade em estoque(em kilos): ");
+    printf("Quantidade em estoque(em quilos): ");
+    int quantvalida;
     scanf("%d", &estoque[*numProdutos].quantidade);
+     if (scanf( "%d", estoque[*numProdutos].quantidade) == 1) {
+         quantvalida = 1;
+     } else{
+         printf("Valor invalido! insira um número para continuar\n");
+      }
+      
     while (getchar() != '\n');
     printf("Preço de compra: ");
     scanf("%f", &estoque[*numProdutos].precoCompra);
@@ -85,7 +92,7 @@ int encontrarProduto(struct ProdutoEstoque estoque[], int numProdutos, char *nom
 void adicionarTransacao(struct ProdutoEstoque estoque[], int numProdutos, struct Transacao transacoes[], int *numTransacoes) {
     if (*numTransacoes >= MAX_TRANSACOES) {
         printf("O limite de transações foi atingido.\n");
-
+   
     }
     transacoes[*numTransacoes].quantidadeItens = 0;
     transacoes[*numTransacoes].precoTotalTransacao = 0;
@@ -95,7 +102,7 @@ void adicionarTransacao(struct ProdutoEstoque estoque[], int numProdutos, struct
     int escolhaCaixa;
     do {
         printf("\n---- Adicionando Itens ----\n");
-        printf("1. Adicionar um produto\n");
+        printf("1. Adicionar Item\n");
         printf("2. Finalizar venda\n");
         printf("3. Cancelar venda\n");
         printf("Escolha uma opção: ");
@@ -168,10 +175,10 @@ void adicionarTransacao(struct ProdutoEstoque estoque[], int numProdutos, struct
         }
         printf("Digite o valor do pagamento: R$ ");
      scanf("%f", &pagamento);
-
+    
     if (pagamento < transacoes[*numTransacoes].precoTotalTransacao) {
         printf("Pagamento insuficiente. Transação cancelada.\n");
-
+    
     }
         while (getchar() != '\n');
         troco = pagamento - transacoes[*numTransacoes].precoTotalTransacao;
@@ -245,7 +252,7 @@ void adicionarTransacao(struct ProdutoEstoque estoque[], int numProdutos, struct
                     if (estoqueLogin()) {
                         do {
                             printf("\nMenu de Estoque:\n");
-                            printf("1. Adicionar um produto\n");
+                            printf("1. Cadastrar um produto\n");
                             printf("2. Mostrar produtos no estoque\n");
                             printf("3. Procurar produto no estoque\n");
                             printf("4. Voltar ao menu principal\n");
@@ -312,5 +319,5 @@ void adicionarTransacao(struct ProdutoEstoque estoque[], int numProdutos, struct
                     printf("Opção inválida. Tente novamente.\n");
             }
         } while (escolha != 3);
-       return 0;
-}
+        return 0;
+    }
